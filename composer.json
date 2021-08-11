@@ -1,0 +1,63 @@
+{
+  "name": "mohammed-zaki/laravel-h5p",
+  "description": "H5P Plugin for laravel platform",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Mohammed Zaki",
+      "email": "mohammedzaki.dev@gmail.com"
+    },
+    {
+      "name": "Alefe Souza",
+      "email": "contact@alefesouza.com"
+    },
+    {
+      "name": "Anass BOUTAKAOUA",
+      "email": "anass@itcours.com"
+    },
+    {
+      "name": "Abdelouahab Djoudi",
+      "email": "info@djoudi.net"
+    },
+    {
+      "name": "Mateusz Wojczal",
+      "email": "mateusz@escolasoft.com"
+    },
+    {
+      "name": "Marcin Lenkowski",
+      "email": "Marcin.Lenkowski@escola.pl"
+    }
+  ],
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "Zaki\\LaravelH5p\\": "src/LaravelH5p"
+    }
+  },
+  "require": {
+    "php": "^7.2",
+    "laravel/framework": "8.*",
+    "laravelcollective/html": "6.*",
+    "h5p/h5p-core": "^1.24.0",
+    "h5p/h5p-editor": "^1.24.0",
+    "guzzlehttp/guzzle": "7.*"
+  },
+  "require-dev": {
+    "fzaninotto/faker": "^1.8",
+    "mockery/mockery": "1.2.*",
+    "phpunit/phpunit": "~7.0",
+    "xethron/migrations-generator": "^2.0"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Zaki\\LaravelH5p\\LaravelH5pServiceProvider"
+      ],
+      "aliases": {
+        "LaravelH5p": "Zaki\\LaravelH5p\\Facades"
+      }
+    }
+  }
+}
