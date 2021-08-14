@@ -30,7 +30,6 @@
             {!! $embed_code  !!}
         </div>
 
-        <script type="text/javascript" src="{{ url('/assets/js/app.js') }}"></script>
         <script type="text/javascript">
             H5PIntegration = {!! json_encode($settings) !!};
         </script>

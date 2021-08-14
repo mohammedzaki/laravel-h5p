@@ -18,6 +18,7 @@ use Zaki\LaravelH5p\Storages\EditorStorage;
 use Zaki\LaravelH5p\Storages\LaravelH5pStorage;
 use H5PContentValidator;
 use H5PCore;
+
 //use H5PDevelopment;
 //use H5PDefaultStorage;
 //use H5PEditorEndpoints;
@@ -94,8 +95,8 @@ class LaravelH5p
     public static function get_h5p_storage($path = '', $absolute = false)
     {
         if ($absolute) {
-            return new LaravelH5pStorage(storage_path('h5p'.$path));
-//            return storage_path('h5p' . $path);
+            return new LaravelH5pStorage(storage_path('app/public/h5p'.$path));
+//            return public_path('h5p' . $path);
         } else {
             return self::get_url('/h5p'.$path);
         }
@@ -126,7 +127,7 @@ class LaravelH5p
         $return = self::get_url('/h5p'.$path);
 
         if ($absolute) {
-            return storage_path('h5p/'.realpath($return));
+            return storage_path('app/public/h5p'.realpath($return));
 //            return storage('/h5p/libraries' . $path);
         } else {
             return $return;
@@ -218,10 +219,14 @@ class LaravelH5p
      */
     private static function get_core_settings()
     {
+        $token = csrf_token();
         $settings = [
             'baseUrl'            => config('laravel-h5p.domain'),
-            'url'                => self::get_h5p_storage(), // for uploaded
-            'postUserStatistics' => (config('laravel-h5p.h5p_track_user', true) === '1') && Auth::check(),
+            'url'                => 'http://localhost:1111/storage/h5p', // for uploaded
+            'url'                => asset('storage/h5p'),
+
+//            'url'                => self::get_h5p_storage(). '?_token=' . $token , // for uploaded
+            'postUserStatistics' => (config('laravel-h5p.h5p_track_user', true) === true) && Auth::check(),
             'ajax'               => [
                 'setFinished'     => route('h5p.ajax.finish'),
                 'contentUserData' => route('h5p.ajax.content-user-data'),
@@ -274,7 +279,7 @@ class LaravelH5p
     private static function get_editor_settings($content = null)
     {
         $settings = self::get_core_settings();
-
+        $token = csrf_token();
         $settings['editor'] = [
             'filesPath' => self::get_h5p_storage('/editor'),
             'fileIcon'  => [
@@ -282,6 +287,7 @@ class LaravelH5p
                 'width'  => 50,
                 'height' => 50,
             ],
+            //'ajaxPath' => route('h5p.ajax').'/?_token=' . $token ,
             'ajaxPath' => route('h5p.ajax').'/',
             // for checkeditor,
             'libraryUrl'         => self::get_h5peditor_url(),
@@ -359,6 +365,7 @@ class LaravelH5p
         //        }
         // Getting author's user id
         $author_id = (int) (is_array($content) ? $content['user_id'] : $content->user_id);
+
         // Add JavaScript settings for this content
         $settings = [
             'library'         => H5PCore::libraryToString($content['library']),
@@ -379,7 +386,8 @@ class LaravelH5p
 
         // Get preloaded user data for the current user
         if (config('laravel-h5p.h5p_save_content_state') && Auth::check()) {
-            $results = DB::select('
+            $results = \DB::select(
+                '
                 SELECT
                 hcud.sub_content_id,
                 hcud.data_id,
@@ -387,7 +395,8 @@ class LaravelH5p
                 FROM h5p_contents_user_data hcud
                 WHERE user_id = ?
                 AND content_id = ?
-                AND preload = 1', [Auth::user()->id, $content['id']]
+                AND preload = 1',
+                [Auth::user()->id, $content['id']]
             );
 
             if ($results) {

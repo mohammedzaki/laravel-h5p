@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class H5pResult extends Model
 {
+    public $timestamps = false;
     protected $primaryKey = 'id';
     protected $fillable = [
         'content_id',

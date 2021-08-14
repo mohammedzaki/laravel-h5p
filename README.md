@@ -47,10 +47,10 @@ Add to Composer-Classmap:
 
 For linux
 ```bash
-cd public/vendor/h5p
-ln -s ../../../storage/h5p/content
-ln -s ../../../storage/h5p/editor
-ln -s ../../../storage/h5p/libraries
+cd public/assets/vendor/h5p
+ln -s ../../../../storage/h5p/content
+ln -s ../../../../storage/h5p/editor
+ln -s ../../../../storage/h5p/libraries
 ```
 For windows
 ```cmd admin window

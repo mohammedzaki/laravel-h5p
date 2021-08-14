@@ -3,29 +3,7 @@
 @section( 'h5p' )
 <div class="container-fluid">
 
-
-
     <div class="row" style="margin-bottom: 10px;">
-
-        <div class="col-md-9">
-
-
-
-            {!! Form::open(['route'=>"h5p.index", 'class'=>'form-inline', 'method'=>'GET']) !!}
-            <fieldset>
-                <p class="form-control-static">
-                    {{ trans('laravel-h5p.content.search-result', ['count' => number_format($entrys->total())]) }}
-                </p>
-
-                {!! Form::select('sf', $search_fields, [], ['class'=>'form-control']) !!}
-                <input type="text" class="form-control" placeholder="{{ trans('laravel-h5p.content.keyword') }}" name='s' value='{{ $request->get('s') }}'>
-                <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> {{ trans('laravel-h5p.content.search') }}</button>
-            </fieldset>
-
-            {!! Form::close() !!}
-
-        </div>
-
         <div class="col-md-3">
             <a href="{{ route("h5p.create") }}" class="btn btn-primary pull-right">{{ trans('laravel-h5p.content.create') }}</a>
         </div>
@@ -35,7 +13,7 @@
 
         <div class="col-md-12">
 
-            <table class="table text-middle text-center h5p-lists">
+            <table class="table text-middle text-center h5p-lists table-hover table-striped">
                 <colgroup>
                     <col width="10%">
                     <col width="15%">
@@ -113,17 +91,20 @@
 @push( 'h5p-footer-script' )
 <script type="text/javascript">
 
-    $(document).ready(function () {
+    H5P.jQuery(document).ready(function () {
 
-        $('.h5p-delete').on('click', function () {
+        H5P.jQuery('.h5p-delete').on('click', function () {
 
-            var $obj = $(this);
+            var $obj = H5P.jQuery(this);
             var msg = "{{ trans('laravel-h5p.content.confirm_destroy') }}";
             if (confirm(msg)) {
 
-                $.ajax({
+                H5P.jQuery.ajax({
                     url: $obj.data('delete'),
                     method: "DELETE",
+                    headers: {
+                        'X-CSRF-TOKEN': H5P.jQuery('meta[name="csrf-token"]').attr('content'),
+                    },
                     success: function (data) {
                         location.reload();
                     },

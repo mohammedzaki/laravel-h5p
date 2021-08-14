@@ -13,6 +13,7 @@
 namespace Zaki\LaravelH5p\Storages;
 
 use H5PFileStorage;
+use Zaki\LaravelH5p\Eloquents\H5pTmpfile;
 
 //use Illuminate\Filesystem\Filesystem;
 //use Symfony\Component\Finder\Finder;
@@ -21,6 +22,7 @@ class LaravelH5pStorage implements H5PFileStorage
 {
     private $path;
     private $alteditorpath;
+    private $nonce;
 
     /**
      * The great Constructor!
@@ -236,13 +238,16 @@ class LaravelH5pStorage implements H5PFileStorage
                 } else {
                     // Rewrite relative URLs used inside stylesheets
                     $content .= preg_replace_callback(
-                        '/url\([\'"]?([^"\')]+)[\'"]?\)/i', function ($matches) use ($cssRelPath) {
+                        '/url\([\'"]?([^"\')]+)[\'"]?\)/i',
+                        function ($matches) use ($cssRelPath) {
                             if (preg_match("/^(data:|([a-z0-9]+:)?\/)/i", $matches[1]) === 1) {
                                 return $matches[0]; // Not relative, skip
                             }
 
                             return 'url("../'.$cssRelPath.$matches[1].'")';
-                        }, $assetContent)."\n";
+                        },
+                        $assetContent
+                    )."\n";
                 }
             }
 
@@ -342,12 +347,7 @@ class LaravelH5pStorage implements H5PFileStorage
         // Add filename to path
         $path .= '/'.$file->getName();
 
-        $fileData = $file->getData();
-        if ($fileData) {
-            file_put_contents($path, $fileData);
-        } else {
-            copy($_FILES['file']['tmp_name'], $path);
-        }
+        copy($_FILES['file']['tmp_name'], $path);
 
         return $file;
     }
@@ -414,20 +414,19 @@ class LaravelH5pStorage implements H5PFileStorage
         $contentFiles = array_diff(scandir($contentSource), ['.', '..', 'content.json']);
         foreach ($contentFiles as $file) {
             if (is_dir("{$contentSource}/{$file}")) {
-                self::copyFileTree("{$contentSource}/{$file}", "{$target}/{$file}");
+                self::copyFileTree("{$contentSource}/{$file}", "{$target}/{$file}", $this->nonce);
             } else {
                 copy("{$contentSource}/{$file}", "{$target}/{$file}");
             }
         }
-
         // Successfully loaded content json of file into editor
-        $h5pJson = $this->getContent($source.DIRECTORY_SEPARATOR.'h5p.json');
-        $contentJson = $this->getContent($contentSource.DIRECTORY_SEPARATOR.'content.json');
-
-        return (object) [
-            'h5pJson'     => $h5pJson,
-            'contentJson' => $contentJson,
-        ];
+//        $h5pJson = null; //$this->getContent($source.DIRECTORY_SEPARATOR.'h5p.json');
+//        $contentJson = $this->getContent($contentSource.DIRECTORY_SEPARATOR.'content.json');
+//
+//        return (object) [
+//            'h5pJson'     => $h5pJson,
+//            'contentJson' => $contentJson,
+//        ];
     }
 
     /**
@@ -487,7 +486,7 @@ class LaravelH5pStorage implements H5PFileStorage
      * @return bool
      *              Indicates if the directory existed.
      */
-    private static function copyFileTree($source, $destination)
+    private static function copyFileTree($source, $destination, $nonce = null)
     {
         if (!self::dirReady($destination)) {
             throw new \Exception('unabletocopy');
@@ -508,10 +507,28 @@ class LaravelH5pStorage implements H5PFileStorage
                     self::copyFileTree("{$source}/{$file}", "{$destination}/{$file}");
                 } else {
                     copy("{$source}/{$file}", "{$destination}/{$file}");
+                    if (isset($nonce)) {
+                        self::markFileForCleanup($file, $nonce);
+                    }
                 }
             }
         }
         closedir($dir);
+    }
+
+    public static function markFileForCleanup($file, $nonce)
+    {
+        $path = '';
+
+        // Should be in editor tmp folder
+        $path .= '/editor';
+
+        // Add file type to path
+        $path .= '/images';
+        // Add filename to path
+        $path .= '/'.$file;
+
+        H5pTmpfile::create(['path' => $path, 'nonce' => $nonce, 'created_at' => time()]);
     }
 
     /**
@@ -581,16 +598,30 @@ class LaravelH5pStorage implements H5PFileStorage
     }
 
     /**
-     * Store the given stream into the given file.
-     *
-     * @param string   $path
-     * @param string   $file
-     * @param resource $stream
-     *
-     * @return bool
-     */
+       * Store the given stream into the given file.
+       *
+       * @param string $path
+       * @param string $file
+       * @param resource $stream
+       * @return bool
+       */
     public function saveFileFromZip($path, $file, $stream)
     {
+        // Add filename to path
+        $absolutePath = $path.'/'.$file;
+        $newDirPath = preg_replace("/\/[^\/]+\/?$/", '', $absolutePath);
+        if (!self::dirReady($newDirPath)) {
+            throw new \Exception('unabletocopy');
+        }
+
+        if ($stream) {
+            file_put_contents($absolutePath, $stream);
+        }
+
         return true;
+    }
+
+    public function setNonce($nonce) {
+        $this->nonce = $nonce;
     }
 }
