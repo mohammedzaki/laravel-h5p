@@ -11,29 +11,30 @@ use Illuminate\Database\Eloquent\Model;
 class H5pContent extends Model
 {
     protected $primaryKey = 'id';
-    protected $fillable = [
-        'user_id',
-        'title',
-        'library_id',
-        'parameters',
-        'filtered',
-        'slug',
-        'embed_type',
-        'disable',
-        'content_type',
-        'author',
-        'source',
-        'year_from',
-        'year_to',
-        'license',
-        'license_version',
-        'license_extras',
-        'author_comments',
-        'changes',
-        'default_languge',
-        'keywords',
-        'description',
-    ];
+    protected $fillable
+                          = [
+            'user_id',
+            'title',
+            'library_id',
+            'parameters',
+            'filtered',
+            'slug',
+            'embed_type',
+            'disable',
+            'content_type',
+            'author',
+            'source',
+            'year_from',
+            'year_to',
+            'license',
+            'license_version',
+            'license_extras',
+            'author_comments',
+            'changes',
+            'default_languge',
+            'keywords',
+            'description',
+        ];
 
     public function user()
     {
@@ -42,6 +43,6 @@ class H5pContent extends Model
 
     public function get_user()
     {
-        return (object) DB::table('users')->where('id', $this->user_id)->first();
+        return (object)DB::table('users')->where('id', $this->user_id)->first();
     }
 }

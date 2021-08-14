@@ -17,25 +17,25 @@ class AjaxController extends Controller
 {
     public function libraries(Request $request)
     {
-        $machineName = $request->get('machineName');
+        $machineName   = $request->get('machineName');
         $major_version = $request->get('majorVersion');
         $minor_version = $request->get('minorVersion');
 
-        $h5p = App::make('LaravelH5p');
-        $core = $h5p::$core;
+        $h5p    = App::make('LaravelH5p');
+        $core   = $h5p::$core;
         $editor = $h5p::$h5peditor;
 
         //log($machineName);
-        Log::debug('An informational message.'.$machineName.'====='.$h5p->get_language());
+        Log::debug('An informational message.' . $machineName . '=====' . $h5p->get_language());
         if ($machineName) {
             $defaultLanguag = $editor->getLibraryLanguage($machineName, $major_version, $minor_version, $h5p->get_language());
-            Log::debug('An informational message.'.$machineName.'====='.$h5p->get_language().'====='.$defaultLanguag);
+            Log::debug('An informational message.' . $machineName . '=====' . $h5p->get_language() . '=====' . $defaultLanguag);
 
             //   public function getLibraryData($machineName, $majorVersion, $minorVersion, $languageCode, $prefix = '', $fileDir = '', $defaultLanguage) {
 
             $editor->ajax->action(H5PEditorEndpoints::SINGLE_LIBRARY, $machineName, $major_version, $minor_version, $h5p->get_language(), '', $h5p->get_h5plibrary_url('', true), $defaultLanguag);  //$defaultLanguage
             // Log library load
-            event(new H5pEvent('library', null, null, null, $machineName, $major_version.'.'.$minor_version));
+            event(new H5pEvent('library', null, null, null, $machineName, $major_version . '.' . $minor_version));
         } else {
             // Otherwise retrieve all libraries
             $editor->ajax->action(H5PEditorEndpoints::LIBRARIES);
@@ -44,21 +44,21 @@ class AjaxController extends Controller
 
     public function singleLibrary(Request $request)
     {
-        $h5p = App::make('LaravelH5p');
+        $h5p    = App::make('LaravelH5p');
         $editor = $h5p::$h5peditor;
         $editor->ajax->action(H5PEditorEndpoints::SINGLE_LIBRARY, $request->get('_token'));
     }
 
     public function contentTypeCache(Request $request)
     {
-        $h5p = App::make('LaravelH5p');
+        $h5p    = App::make('LaravelH5p');
         $editor = $h5p::$h5peditor;
         $editor->ajax->action(H5PEditorEndpoints::CONTENT_TYPE_CACHE, $request->get('_token'));
     }
 
     public function libraryInstall(Request $request)
     {
-        $h5p = App::make('LaravelH5p');
+        $h5p    = App::make('LaravelH5p');
         $editor = $h5p::$h5peditor;
         $editor->ajax->action(H5PEditorEndpoints::LIBRARY_INSTALL, $request->get('_token'), $request->get('id'));
     }
@@ -66,8 +66,8 @@ class AjaxController extends Controller
     public function libraryUpload(Request $request, $nonce = null)
     {
         $filePath = $request->file('h5p')->getPathName();
-        $h5p = App::make('LaravelH5p');
-        $core = $h5p::$core;
+        $h5p      = App::make('LaravelH5p');
+        $core     = $h5p::$core;
         if (isset($nonce)) {
             $core->fs->setNonce($nonce);
         }
@@ -77,7 +77,7 @@ class AjaxController extends Controller
 
     public function libraryFilter(Request $request, $nonce = null)
     {
-        $h5p = App::make('LaravelH5p');
+        $h5p    = App::make('LaravelH5p');
         $editor = $h5p::$h5peditor;
         $editor->ajax->action(H5PEditorEndpoints::FILTER, $request->get('_token'), $request->get('libraryParameters'));
     }
@@ -85,13 +85,13 @@ class AjaxController extends Controller
     public function files(Request $request, $nonce = null)
     {
         $filePath = $request->file('file');
-        $h5p = App::make('LaravelH5p');
-        $editor = $h5p::$h5peditor;
+        $h5p      = App::make('LaravelH5p');
+        $editor   = $h5p::$h5peditor;
         $editor->ajax->action(H5PEditorEndpoints::FILES, $request->get('_token'), $request->get('contentId'));
 
         if ($nonce) {
             $last = H5pTmpfile::orderBy('id', 'desc')->first();
-            $last->update([ 'nonce' => $nonce ]);
+            $last->update(['nonce' => $nonce]);
         }
     }
 
@@ -106,19 +106,19 @@ class AjaxController extends Controller
 
         $data = [
             'content_id' => $input['contentId'],
-            'max_score' => $input['maxScore'],
-            'score' => $input['score'],
-            'opened' => $input['opened'],
-            'finished' => $input['finished'],
-            'time' => $input['finished'] - $input['opened'],
-            'user_id' => \Auth::user()->id,
+            'max_score'  => $input['maxScore'],
+            'score'      => $input['score'],
+            'opened'     => $input['opened'],
+            'finished'   => $input['finished'],
+            'time'       => $input['finished'] - $input['opened'],
+            'user_id'    => \Auth::user()->id,
         ];
 
         H5pResult::create($data);
 
         return response()->json([
-            'success' => true,
-        ]);
+                                    'success' => true,
+                                ]);
     }
 
     public function contentUserData(Request $request)
@@ -128,21 +128,21 @@ class AjaxController extends Controller
         $contentId = basename($request->header('referer'));
 
         $userData = H5pContentsUserData::where([
-            'content_id' => $contentId,
-            'data_id' => 'state',
-            'sub_content_id' => 0,
-            'user_id' => \Auth::user()->id,
-        ])->first();
+                                                   'content_id'     => $contentId,
+                                                   'data_id'        => 'state',
+                                                   'sub_content_id' => 0,
+                                                   'user_id'        => \Auth::user()->id,
+                                               ])->first();
 
         $data = [
-            'content_id' => $contentId,
-            'data_id' => 'state',
+            'content_id'     => $contentId,
+            'data_id'        => 'state',
             'sub_content_id' => 0,
-            'user_id' => \Auth::user()->id,
-            'data' => $input['data'],
-            'preload' => $input['preload'],
-            'invalidate' => $input['invalidate'],
-            'updated_at' => now(),
+            'user_id'        => \Auth::user()->id,
+            'data'           => $input['data'],
+            'preload'        => $input['preload'],
+            'invalidate'     => $input['invalidate'],
+            'updated_at'     => now(),
         ];
 
         if (empty($userData)) {
@@ -152,7 +152,7 @@ class AjaxController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-        ]);
+                                    'success' => true,
+                                ]);
     }
 }

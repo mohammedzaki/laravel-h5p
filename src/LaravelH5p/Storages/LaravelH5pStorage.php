@@ -35,7 +35,7 @@ class LaravelH5pStorage implements H5PFileStorage
     public function __construct($path, $alteditorpath = null)
     {
         // Set H5P storage path
-        $this->path = $path;
+        $this->path          = $path;
         $this->alteditorpath = $alteditorpath;
     }
 
@@ -55,7 +55,7 @@ class LaravelH5pStorage implements H5PFileStorage
      */
     public function saveLibrary($library)
     {
-        $dest = $this->path.'/libraries/'.\H5PCore::libraryToString($library, true);
+        $dest = $this->path . '/libraries/' . \H5PCore::libraryToString($library, true);
 
         // Make sure destination dir doesn't exist
         \H5PCore::deleteFileTree($dest);
@@ -65,11 +65,124 @@ class LaravelH5pStorage implements H5PFileStorage
     }
 
     /**
+     * Recursive function for copying directories.
+     *
+     * @param string $source
+     *                            From path
+     * @param string $destination
+     *                            To path
+     *
+     * @throws Exception Unable to copy the file
+     *
+     * @return bool
+     *              Indicates if the directory existed.
+     */
+    private static function copyFileTree($source, $destination, $nonce = null)
+    {
+        if (!self::dirReady($destination)) {
+            throw new \Exception('unabletocopy');
+        }
+
+        $ignoredFiles = self::getIgnoredFiles("{$source}/.h5pignore");
+
+        $dir = opendir($source);
+        if ($dir === false) {
+            trigger_error('Unable to open directory ' . $source, E_USER_WARNING);
+
+            throw new \Exception('unabletocopy');
+        }
+
+        while (false !== ($file = readdir($dir))) {
+            if (($file != '.') && ($file != '..') && $file != '.git' && $file != '.gitignore' && !in_array($file, $ignoredFiles)) {
+                if (is_dir("{$source}/{$file}")) {
+                    self::copyFileTree("{$source}/{$file}", "{$destination}/{$file}");
+                } else {
+                    copy("{$source}/{$file}", "{$destination}/{$file}");
+                    if (isset($nonce)) {
+                        self::markFileForCleanup($file, $nonce);
+                    }
+                }
+            }
+        }
+        closedir($dir);
+    }
+
+    /**
+     * Recursive function that makes sure the specified directory exists and
+     * is writable.
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    private static function dirReady($path)
+    {
+        if (!file_exists($path)) {
+            $parent = preg_replace("/\/[^\/]+\/?$/", '', $path);
+            if (!self::dirReady($parent)) {
+                return false;
+            }
+
+            mkdir($path, 0777, true);
+        }
+
+        if (!is_dir($path)) {
+            trigger_error('Path is not a directory ' . $path, E_USER_WARNING);
+
+            return false;
+        }
+
+        if (!is_writable($path)) {
+            trigger_error('Unable to write to ' . $path . ' – check directory permissions –', E_USER_WARNING);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Retrieve array of file names from file.
+     *
+     * @param string $file
+     *
+     * @return array Array with files that should be ignored
+     */
+    private static function getIgnoredFiles($file)
+    {
+        if (file_exists($file) === false) {
+            return [];
+        }
+
+        $contents = file_get_contents($file);
+        if ($contents === false) {
+            return [];
+        }
+
+        return preg_split('/\s+/', $contents);
+    }
+
+    public static function markFileForCleanup($file, $nonce)
+    {
+        $path = '';
+
+        // Should be in editor tmp folder
+        $path .= '/editor';
+
+        // Add file type to path
+        $path .= '/images';
+        // Add filename to path
+        $path .= '/' . $file;
+
+        H5pTmpfile::create(['path' => $path, 'nonce' => $nonce, 'created_at' => time()]);
+    }
+
+    /**
      * Store the content folder.
      *
      * @param string $source
      *                        Path on file system to content directory.
-     * @param array  $content
+     * @param array $content
      *                        Content properties
      */
     public function saveContent($source, $content)
@@ -98,14 +211,14 @@ class LaravelH5pStorage implements H5PFileStorage
      *
      * @param string $id
      *                      Identifier of content to clone.
-     * @param int    $newId
+     * @param int $newId
      *                      The cloned content's identifier
      */
     public function cloneContent($id, $newId)
     {
-        $path = $this->path.'/content/';
-        if (file_exists($path.$id)) {
-            self::copyFileTree($path.$id, $path.$newId);
+        $path = $this->path . '/content/';
+        if (file_exists($path . $id)) {
+            self::copyFileTree($path . $id, $path . $newId);
         }
     }
 
@@ -120,13 +233,13 @@ class LaravelH5pStorage implements H5PFileStorage
         $temp = "{$this->path}/temp";
         self::dirReady($temp);
 
-        return "{$temp}/".uniqid('h5p-');
+        return "{$temp}/" . uniqid('h5p-');
     }
 
     /**
      * Fetch content folder and save in target directory.
      *
-     * @param int    $id
+     * @param int $id
      *                       Content identifier
      * @param string $target
      *                       Where the content folder will be saved
@@ -146,7 +259,7 @@ class LaravelH5pStorage implements H5PFileStorage
     /**
      * Fetch library folder and save in target directory.
      *
-     * @param array  $library
+     * @param array $library
      *                                Library properties
      * @param string $target
      *                                Where the library folder will be saved
@@ -155,7 +268,7 @@ class LaravelH5pStorage implements H5PFileStorage
      */
     public function exportLibrary($library, $target, $developmentPath = null)
     {
-        $folder = \H5PCore::libraryToString($library, true);
+        $folder  = \H5PCore::libraryToString($library, true);
         $srcPath = ($developmentPath === null ? "/libraries/{$folder}" : $developmentPath);
         self::copyFileTree("{$this->path}{$srcPath}", "{$target}/{$folder}");
     }
@@ -214,7 +327,7 @@ class LaravelH5pStorage implements H5PFileStorage
      * Will concatenate all JavaScrips and Stylesheets into two files in order
      * to improve page performance.
      *
-     * @param array  $files
+     * @param array $files
      *                      A set of all the assets required for content to display
      * @param string $key
      *                      Hashed key for cached asset
@@ -229,33 +342,33 @@ class LaravelH5pStorage implements H5PFileStorage
             $content = '';
             foreach ($assets as $asset) {
                 // Get content from asset file
-                $assetContent = file_get_contents($this->path.$asset->path);
-                $cssRelPath = preg_replace('/[^\/]+$/', '', $asset->path);
+                $assetContent = file_get_contents($this->path . $asset->path);
+                $cssRelPath   = preg_replace('/[^\/]+$/', '', $asset->path);
 
                 // Get file content and concatenate
                 if ($type === 'scripts') {
-                    $content .= $assetContent.";\n";
+                    $content .= $assetContent . ";\n";
                 } else {
                     // Rewrite relative URLs used inside stylesheets
                     $content .= preg_replace_callback(
-                        '/url\([\'"]?([^"\')]+)[\'"]?\)/i',
-                        function ($matches) use ($cssRelPath) {
-                            if (preg_match("/^(data:|([a-z0-9]+:)?\/)/i", $matches[1]) === 1) {
-                                return $matches[0]; // Not relative, skip
-                            }
+                                    '/url\([\'"]?([^"\')]+)[\'"]?\)/i',
+                                    function ($matches) use ($cssRelPath) {
+                                        if (preg_match("/^(data:|([a-z0-9]+:)?\/)/i", $matches[1]) === 1) {
+                                            return $matches[0]; // Not relative, skip
+                                        }
 
-                            return 'url("../'.$cssRelPath.$matches[1].'")';
-                        },
-                        $assetContent
-                    )."\n";
+                                        return 'url("../' . $cssRelPath . $matches[1] . '")';
+                                    },
+                                    $assetContent
+                                ) . "\n";
                 }
             }
 
             self::dirReady("{$this->path}/cachedassets");
-            $ext = ($type === 'scripts' ? 'js' : 'css');
+            $ext        = ($type === 'scripts' ? 'js' : 'css');
             $outputfile = "/cachedassets/{$key}.{$ext}";
-            file_put_contents($this->path.$outputfile, $content);
-            $files[$type] = [(object) [
+            file_put_contents($this->path . $outputfile, $content);
+            $files[$type] = [(object)[
                 'path'    => $outputfile,
                 'version' => '',
             ]];
@@ -275,16 +388,16 @@ class LaravelH5pStorage implements H5PFileStorage
         $files = [];
 
         $js = "/cachedassets/{$key}.js";
-        if (file_exists($this->path.$js)) {
-            $files['scripts'] = [(object) [
+        if (file_exists($this->path . $js)) {
+            $files['scripts'] = [(object)[
                 'path'    => $js,
                 'version' => '',
             ]];
         }
 
         $css = "/cachedassets/{$key}.css";
-        if (file_exists($this->path.$css)) {
-            $files['styles'] = [(object) [
+        if (file_exists($this->path . $css)) {
+            $files['styles'] = [(object)[
                 'path'    => $css,
                 'version' => '',
             ]];
@@ -328,7 +441,7 @@ class LaravelH5pStorage implements H5PFileStorage
      * The files must be marked as temporary until the content form is saved.
      *
      * @param \H5peditorFile $file
-     * @param int            $contentid
+     * @param int $contentid
      */
     public function saveFile($file, $contentId)
     {
@@ -338,14 +451,14 @@ class LaravelH5pStorage implements H5PFileStorage
             $path = $this->getEditorPath();
         } else {
             // Should be in content folder
-            $path = $this->path.'/content/'.$contentId;
+            $path = $this->path . '/content/' . $contentId;
         }
-        $path .= '/'.$file->getType().'s';
+        $path .= '/' . $file->getType() . 's';
 
         self::dirReady($path);
 
         // Add filename to path
-        $path .= '/'.$file->getName();
+        $path .= '/' . $file->getName();
 
         copy($_FILES['file']['tmp_name'], $path);
 
@@ -353,12 +466,23 @@ class LaravelH5pStorage implements H5PFileStorage
     }
 
     /**
+     * Easy helper function for retrieving the editor path.
+     *
+     * @return string Path to editor files
+     */
+    private function getEditorPath()
+    {
+        return $this->path . '/editor';
+//        return ($this->alteditorpath !== NULL ? $this->alteditorpath : "{$this->path}/editor");
+    }
+
+    /**
      * Copy a file from another content or editor tmp dir.
      * Used when copy pasting content in H5P Editor.
      *
-     * @param string     $file   path + name
+     * @param string $file path + name
      * @param string|int $fromid Content ID or 'editor' string
-     * @param int        $toid   Target Content ID
+     * @param int $toid Target Content ID
      */
     public function cloneContentFile($file, $fromId, $toId)
     {
@@ -368,11 +492,11 @@ class LaravelH5pStorage implements H5PFileStorage
         } else {
             $sourcepath = "{$this->path}/content/{$fromId}";
         }
-        $sourcepath .= '/'.$file;
+        $sourcepath .= '/' . $file;
 
         // Determine target path
-        $filename = basename($file);
-        $filedir = str_replace($filename, '', $file);
+        $filename   = basename($file);
+        $filedir    = str_replace($filename, '', $file);
         $targetpath = "{$this->path}/content/{$toId}/{$filedir}";
 
         // Make sure it's ready
@@ -392,7 +516,7 @@ class LaravelH5pStorage implements H5PFileStorage
      * Copy a content from one directory to another. Defaults to cloning
      * content from the current temporary upload folder to the editor path.
      *
-     * @param string $source    path to source directory
+     * @param string $source path to source directory
      * @param string $contentId Id of content
      *
      * @return object Object containing h5p json and content json data
@@ -410,8 +534,8 @@ class LaravelH5pStorage implements H5PFileStorage
             $target = "{$this->path}/content/{$contentId}";
         }
 
-        $contentSource = $source.DIRECTORY_SEPARATOR.'content';
-        $contentFiles = array_diff(scandir($contentSource), ['.', '..', 'content.json']);
+        $contentSource = $source . DIRECTORY_SEPARATOR . 'content';
+        $contentFiles  = array_diff(scandir($contentSource), ['.', '..', 'content.json']);
         foreach ($contentFiles as $file) {
             if (is_dir("{$contentSource}/{$file}")) {
                 self::copyFileTree("{$contentSource}/{$file}", "{$target}/{$file}", $this->nonce);
@@ -433,8 +557,8 @@ class LaravelH5pStorage implements H5PFileStorage
      * Checks to see if content has the given file.
      * Used when saving content.
      *
-     * @param string $file      path + name
-     * @param int    $contentId
+     * @param string $file path + name
+     * @param int $contentId
      *
      * @return string File ID or NULL if not found
      */
@@ -449,8 +573,8 @@ class LaravelH5pStorage implements H5PFileStorage
      * Checks to see if content has the given file.
      * Used when saving content.
      *
-     * @param string $file      path + name
-     * @param int    $contentid
+     * @param string $file path + name
+     * @param int $contentid
      *
      * @return string|int File ID or NULL if not found
      */
@@ -474,142 +598,18 @@ class LaravelH5pStorage implements H5PFileStorage
     }
 
     /**
-     * Recursive function for copying directories.
-     *
-     * @param string $source
-     *                            From path
-     * @param string $destination
-     *                            To path
-     *
-     * @throws Exception Unable to copy the file
-     *
-     * @return bool
-     *              Indicates if the directory existed.
-     */
-    private static function copyFileTree($source, $destination, $nonce = null)
-    {
-        if (!self::dirReady($destination)) {
-            throw new \Exception('unabletocopy');
-        }
-
-        $ignoredFiles = self::getIgnoredFiles("{$source}/.h5pignore");
-
-        $dir = opendir($source);
-        if ($dir === false) {
-            trigger_error('Unable to open directory '.$source, E_USER_WARNING);
-
-            throw new \Exception('unabletocopy');
-        }
-
-        while (false !== ($file = readdir($dir))) {
-            if (($file != '.') && ($file != '..') && $file != '.git' && $file != '.gitignore' && !in_array($file, $ignoredFiles)) {
-                if (is_dir("{$source}/{$file}")) {
-                    self::copyFileTree("{$source}/{$file}", "{$destination}/{$file}");
-                } else {
-                    copy("{$source}/{$file}", "{$destination}/{$file}");
-                    if (isset($nonce)) {
-                        self::markFileForCleanup($file, $nonce);
-                    }
-                }
-            }
-        }
-        closedir($dir);
-    }
-
-    public static function markFileForCleanup($file, $nonce)
-    {
-        $path = '';
-
-        // Should be in editor tmp folder
-        $path .= '/editor';
-
-        // Add file type to path
-        $path .= '/images';
-        // Add filename to path
-        $path .= '/'.$file;
-
-        H5pTmpfile::create(['path' => $path, 'nonce' => $nonce, 'created_at' => time()]);
-    }
-
-    /**
-     * Retrieve array of file names from file.
-     *
-     * @param string $file
-     *
-     * @return array Array with files that should be ignored
-     */
-    private static function getIgnoredFiles($file)
-    {
-        if (file_exists($file) === false) {
-            return [];
-        }
-
-        $contents = file_get_contents($file);
-        if ($contents === false) {
-            return [];
-        }
-
-        return preg_split('/\s+/', $contents);
-    }
-
-    /**
-     * Recursive function that makes sure the specified directory exists and
-     * is writable.
+     * Store the given stream into the given file.
      *
      * @param string $path
-     *
+     * @param string $file
+     * @param resource $stream
      * @return bool
      */
-    private static function dirReady($path)
-    {
-        if (!file_exists($path)) {
-            $parent = preg_replace("/\/[^\/]+\/?$/", '', $path);
-            if (!self::dirReady($parent)) {
-                return false;
-            }
-
-            mkdir($path, 0777, true);
-        }
-
-        if (!is_dir($path)) {
-            trigger_error('Path is not a directory '.$path, E_USER_WARNING);
-
-            return false;
-        }
-
-        if (!is_writable($path)) {
-            trigger_error('Unable to write to '.$path.' – check directory permissions –', E_USER_WARNING);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Easy helper function for retrieving the editor path.
-     *
-     * @return string Path to editor files
-     */
-    private function getEditorPath()
-    {
-        return $this->path.'/editor';
-//        return ($this->alteditorpath !== NULL ? $this->alteditorpath : "{$this->path}/editor");
-    }
-
-    /**
-       * Store the given stream into the given file.
-       *
-       * @param string $path
-       * @param string $file
-       * @param resource $stream
-       * @return bool
-       */
     public function saveFileFromZip($path, $file, $stream)
     {
         // Add filename to path
-        $absolutePath = $path.'/'.$file;
-        $newDirPath = preg_replace("/\/[^\/]+\/?$/", '', $absolutePath);
+        $absolutePath = $path . '/' . $file;
+        $newDirPath   = preg_replace("/\/[^\/]+\/?$/", '', $absolutePath);
         if (!self::dirReady($newDirPath)) {
             throw new \Exception('unabletocopy');
         }
@@ -621,7 +621,8 @@ class LaravelH5pStorage implements H5PFileStorage
         return true;
     }
 
-    public function setNonce($nonce) {
+    public function setNonce($nonce)
+    {
         $this->nonce = $nonce;
     }
 }

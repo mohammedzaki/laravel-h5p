@@ -42,8 +42,8 @@ class H5pEvent extends H5PEventBase
     protected function save()
     {
 
-                // Get data in array format without NULL values
-        $data = $this->getDataArray();
+        // Get data in array format without NULL values
+        $data            = $this->getDataArray();
         $data['user_id'] = Auth::id();
 
         // Insert into DB
@@ -58,33 +58,33 @@ class H5pEvent extends H5PEventBase
         return true;
 
 //        $type = $this->type . ' ' . $this->sub_type;
-                //        $current_num = $wpdb->get_var($wpdb->prepare(
-                //                        "SELECT num
-                //           FROM h5p_counters
-                //          WHERE type = '%s'
-                //            AND library_name = '%s'
-                //            AND library_version = '%s'
-                //        ", $type, $this->library_name, $this->library_version));
-                //
-                //
-                //        if ($current_num === NULL) {
-                //            // Insert
-                //            $wpdb->insert("h5p_counters", array(
-                //                'type' => $type,
-                //                'library_name' => $this->library_name,
-                //                'library_version' => $this->library_version,
-                //                'num' => 1
-                //                    ), array('%s', '%s', '%s', '%d'));
-                //        } else {
-                //            // Update num+1
-                //            $wpdb->query($wpdb->prepare(
-                //                            "UPDATE h5p_counters
-                //              SET num = num + 1
-                //            WHERE type = '%s'
-                //              AND library_name = '%s'
-                //              AND library_version = '%s'
-                //                      ", $type, $this->library_name, $this->library_version));
-                //        }
-                //
+        //        $current_num = $wpdb->get_var($wpdb->prepare(
+        //                        "SELECT num
+        //           FROM h5p_counters
+        //          WHERE type = '%s'
+        //            AND library_name = '%s'
+        //            AND library_version = '%s'
+        //        ", $type, $this->library_name, $this->library_version));
+        //
+        //
+        //        if ($current_num === NULL) {
+        //            // Insert
+        //            $wpdb->insert("h5p_counters", array(
+        //                'type' => $type,
+        //                'library_name' => $this->library_name,
+        //                'library_version' => $this->library_version,
+        //                'num' => 1
+        //                    ), array('%s', '%s', '%s', '%d'));
+        //        } else {
+        //            // Update num+1
+        //            $wpdb->query($wpdb->prepare(
+        //                            "UPDATE h5p_counters
+        //              SET num = num + 1
+        //            WHERE type = '%s'
+        //              AND library_name = '%s'
+        //              AND library_version = '%s'
+        //                      ", $type, $this->library_name, $this->library_version));
+        //        }
+        //
     }
 }

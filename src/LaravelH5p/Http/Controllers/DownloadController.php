@@ -11,13 +11,13 @@ class DownloadController extends Controller
 {
     public function __invoke(Request $request, $id)
     {
-        $h5p = App::make('LaravelH5p');
-        $core = $h5p::$core;
+        $h5p       = App::make('LaravelH5p');
+        $core      = $h5p::$core;
         $interface = $h5p::$interface;
 
-        $content = $core->loadContent($id);
+        $content             = $core->loadContent($id);
         $content['filtered'] = '';
-        $params = $core->filterParameters($content);
+        $params              = $core->filterParameters($content);
 
         return response()
             ->download($interface->_download_file, '', [

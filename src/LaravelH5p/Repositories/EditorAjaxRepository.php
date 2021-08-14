@@ -46,13 +46,15 @@ class EditorAjaxRepository implements H5PEditorAjaxInterface
     public function getAuthorsRecentlyUsedLibraries()
     {
         // Get latest version of local libraries
-        $major_versions_sql = 'SELECT hl.name,
+        $major_versions_sql
+            = 'SELECT hl.name,
                 MAX(hl.major_version) AS major_version
            FROM h5p_libraries hl
           WHERE hl.runnable = 1
        GROUP BY hl.name';
 
-        $minor_versions_sql = "SELECT hl2.name,
+        $minor_versions_sql
+            = "SELECT hl2.name,
                  hl2.major_version,
                  MAX(hl2.minor_version) AS minor_version
             FROM ({$major_versions_sql}) hl1
@@ -88,7 +90,7 @@ class EditorAjaxRepository implements H5PEditorAjaxInterface
     public function getLatestLibraryVersions()
     {
         $recentlyUsed = H5PLibrary::where('semantics', '!=', '')
-            ->get();
+                                  ->get();
 
         $recentlyUsed->each(function ($val) {
             $val->machine_name = $val->name;

@@ -15,31 +15,31 @@ class LibraryController extends Controller
 {
     public function index(Request $request)
     {
-        $h5p = App::make('LaravelH5p');
-        $core = $h5p::$core;
-        $interface = $h5p::$interface;
+        $h5p        = App::make('LaravelH5p');
+        $core       = $h5p::$core;
+        $interface  = $h5p::$interface;
         $not_cached = $interface->getNumNotFiltered();
 
-        $entrys = H5pLibrary::paginate(10);
+        $entrys   = H5pLibrary::paginate(10);
         $settings = $h5p::get_core([
-            'libraryList' => [
-                'notCached' => $not_cached,
-            ],
-            'containerSelector' => '#h5p-admin-container',
-            'extraTableClasses' => '',
-            'l10n'              => [
-                'NA'             => trans('laravel-h5p.common.na'),
-                'viewLibrary'    => trans('laravel-h5p.library.viewLibrary'),
-                'deleteLibrary'  => trans('laravel-h5p.library.deleteLibrary'),
-                'upgradeLibrary' => trans('laravel-h5p.library.upgradeLibrary'),
-            ],
-        ]);
+                                       'libraryList'       => [
+                                           'notCached' => $not_cached,
+                                       ],
+                                       'containerSelector' => '#h5p-admin-container',
+                                       'extraTableClasses' => '',
+                                       'l10n'              => [
+                                           'NA'             => trans('laravel-h5p.common.na'),
+                                           'viewLibrary'    => trans('laravel-h5p.library.viewLibrary'),
+                                           'deleteLibrary'  => trans('laravel-h5p.library.deleteLibrary'),
+                                           'upgradeLibrary' => trans('laravel-h5p.library.upgradeLibrary'),
+                                       ],
+                                   ]);
 
         foreach ($entrys as $library) {
-            $usage = $interface->getLibraryUsage($library->id, $not_cached ? true : false);
-            $settings['libraryList']['listData'][] = (object) [
+            $usage                                 = $interface->getLibraryUsage($library->id, $not_cached ? true : false);
+            $settings['libraryList']['listData'][] = (object)[
                 'id'                     => $library->id,
-                'title'                  => $library->title.' ('.H5PCore::libraryVersion($library).')',
+                'title'                  => $library->title . ' (' . H5PCore::libraryVersion($library) . ')',
                 'restricted'             => ($library->restricted ? true : false),
                 'numContent'             => $interface->getNumContent($library->id),
                 'numContentDependencies' => intval($usage['content']),
@@ -60,13 +60,58 @@ class LibraryController extends Controller
         return view('h5p.library.index', compact('entrys', 'settings', 'last_update', 'hubOn', 'required_files'));
     }
 
+    private function assets($scripts = [], $styles = [])
+    {
+        $prefix = 'assets/vendor/h5p/h5p-core/';
+        $return = [
+            'scripts' => [],
+            'styles'  => [],
+        ];
+
+        foreach (H5PCore::$adminScripts as $script) {
+            $return['scripts'][] = $prefix . $script;
+        }
+
+        $return['styles'][] = $prefix . 'styles/h5p.css';
+        $return['styles'][] = $prefix . 'styles/h5p-admin.css';
+
+        if ($scripts) {
+            foreach ($scripts as $script) {
+                $return['scripts'][] = $prefix . $script;
+            }
+        }
+        if ($styles) {
+            foreach ($styles as $style) {
+                $return['styles'][] = $prefix . $style;
+            }
+        }
+
+        return $return;
+    }
+
+    /**
+     * JavaScript settings needed to rebuild content caches.
+     *
+     * @since 1.1.0
+     */
+    private function get_not_cached_settings($num)
+    {
+        return [
+            'num'      => $num,
+            'url'      => route('h5p.ajax.rebuild-cache'),
+            'message'  => __('Not all content has gotten their cache rebuilt. This is required to be able to delete libraries, and to display how many contents that uses the library.'),
+            'progress' => __('1 content need to get its cache rebuilt. :num contents needs to get their cache rebuilt.', ['num' => $num]),
+            //            'button' => __('Rebuild cache')
+        ];
+    }
+
     public function show(Request $request, $id)
     {
         $library = $this->get_library($id);
 
         // Add settings and translations
-        $h5p = App::make('LaravelH5p');
-        $core = $h5p::$core;
+        $h5p       = App::make('LaravelH5p');
+        $core      = $h5p::$core;
         $interface = $h5p::$interface;
 
         $settings = [
@@ -81,7 +126,7 @@ class LibraryController extends Controller
             'filterPlaceholder'     => trans('laravel-h5p.library.filterPlaceholder'),
             'pageXOfY'              => trans('laravel-h5p.library.pageXOfY'),
         ];
-        $notCached = $interface->getNumNotFiltered();
+        $notCached                               = $interface->getNumNotFiltered();
         if ($notCached) {
             $settings['libraryInfo']['notCached'] = $this->get_not_cached_settings($notCached);
         } else {
@@ -108,6 +153,26 @@ class LibraryController extends Controller
         return view('h5p.library.show', compact('settings', 'required_files', 'library'));
     }
 
+    /**
+     * Load library.
+     *
+     * @since 1.1.0
+     *
+     * @param int $id optional
+     */
+    private function get_library($id = null)
+    {
+//        if ($this->library !== NULL) {
+        //            return $this->library; // Return the current loaded library.
+        //        }
+        if ($id === null) {
+            $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+        }
+
+        // Try to find content with $id.
+        return H5pLibrary::findOrFail($id);
+    }
+
     public function store(Request $request)
     {
         $this->validate($request, [
@@ -116,13 +181,13 @@ class LibraryController extends Controller
 
         if ($request->hasFile('h5p_file') && $request->file('h5p_file')->isValid()) {
             Log::info('Yes Good ');
-            $h5p = App::make('LaravelH5p');
+            $h5p       = App::make('LaravelH5p');
             $validator = $h5p::$validator;
             $interface = $h5p::$interface;
 
             // Content update is skipped because it is new registration
-            $content = null;
-            $skipContent = true;
+            $content          = null;
+            $skipContent      = true;
             $h5p_upgrade_only = ($request->get('h5p_upgrade_only')) ? true : false;
 
             rename($request->file('h5p_file')->getPathName(), $interface->getUploadedH5pPath());
@@ -155,14 +220,14 @@ class LibraryController extends Controller
     {
         $library = H5pLibrary::findOrFail($request->get('id'));
 
-        $h5p = App::make('LaravelH5p');
+        $h5p       = App::make('LaravelH5p');
         $interface = $h5p::$interface;
 
         // Error if in use
         $usage = $interface->getLibraryUsage($library);
         if ($usage['content'] !== 0 || $usage['libraries'] !== 0) {
             return redirect()->route('h5p.library.index')
-                ->with('error', trans('laravel-h5p.library.used_library_can_not_destoroied'));
+                             ->with('error', trans('laravel-h5p.library.used_library_can_not_destoroied'));
         }
 
         $interface->deleteLibrary($library);
@@ -172,13 +237,18 @@ class LibraryController extends Controller
             ->with('success', trans('laravel-h5p.library.destroyed'));
     }
 
+    //@TODO The following is a feature from the existing WordPress plug-in, but not all features need to be developed.
+    // Then connect to the new method as needed and implement it
+    //https://github.com/h5p/h5p-wordpress-plugin/blob/90a7bb4fa3d927eda401470bc599c9f1d7508ffe/admin/class-h5p-library-admin.php
+    //----------------------------------------------------------------------------------
+
     public function clear(Request $request)
     {
-        $h5p = App::make('LaravelH5p');
+        $h5p  = App::make('LaravelH5p');
         $core = $h5p::$core;
 
         // Do as many as we can in five seconds.
-        $start = microtime(true);
+        $start    = microtime(true);
         $contents = H5pContent::where('filtered', '')->get();
 
         $done = 0;
@@ -195,7 +265,7 @@ class LibraryController extends Controller
         $count = intval(count($contents) - $done);
 
         return redirect()->route('h5p.library.index')
-            ->with('success', trans('laravel-h5p.library.cleared'));
+                         ->with('success', trans('laravel-h5p.library.cleared'));
     }
 
     public function restrict(Request $request)
@@ -214,60 +284,6 @@ class LibraryController extends Controller
         return response()->json($entry);
     }
 
-    private function assets($scripts = [], $styles = [])
-    {
-        $prefix = 'assets/vendor/h5p/h5p-core/';
-        $return = [
-            'scripts' => [],
-            'styles'  => [],
-        ];
-
-        foreach (H5PCore::$adminScripts as $script) {
-            $return['scripts'][] = $prefix.$script;
-        }
-
-        $return['styles'][] = $prefix.'styles/h5p.css';
-        $return['styles'][] = $prefix.'styles/h5p-admin.css';
-
-        if ($scripts) {
-            foreach ($scripts as $script) {
-                $return['scripts'][] = $prefix.$script;
-            }
-        }
-        if ($styles) {
-            foreach ($styles as $style) {
-                $return['styles'][] = $prefix.$style;
-            }
-        }
-
-        return $return;
-    }
-
-    //@TODO The following is a feature from the existing WordPress plug-in, but not all features need to be developed.
-    // Then connect to the new method as needed and implement it
-    //https://github.com/h5p/h5p-wordpress-plugin/blob/90a7bb4fa3d927eda401470bc599c9f1d7508ffe/admin/class-h5p-library-admin.php
-    //----------------------------------------------------------------------------------
-
-    /**
-     * Load library.
-     *
-     * @since 1.1.0
-     *
-     * @param int $id optional
-     */
-    private function get_library($id = null)
-    {
-//        if ($this->library !== NULL) {
-        //            return $this->library; // Return the current loaded library.
-        //        }
-        if ($id === null) {
-            $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
-        }
-
-        // Try to find content with $id.
-        return H5pLibrary::findOrFail($id);
-    }
-
     /**
      * Display admin interface for managing content libraries.
      *
@@ -276,51 +292,35 @@ class LibraryController extends Controller
     public function display_libraries_page()
     {
         switch (filter_input(INPUT_GET, 'task', FILTER_SANITIZE_STRING)) {
-        case null:
-            $this->display_libraries();
+            case null:
+                $this->display_libraries();
 
-            return;
-        case 'show':
-            $this->display_library_details();
+                return;
+            case 'show':
+                $this->display_library_details();
 
-            return;
-        case 'delete':
-            $library = $this->get_library();
-            H5P_Plugin_Admin::print_messages();
-            if ($library) {
-                include_once 'views/library-delete.php';
-            }
+                return;
+            case 'delete':
+                $library = $this->get_library();
+                H5P_Plugin_Admin::print_messages();
+                if ($library) {
+                    include_once 'views/library-delete.php';
+                }
 
-            return;
-        case 'upgrade':
-            $library = $this->get_library();
-            if ($library) {
-                $settings = $this->display_content_upgrades($library);
-            }
-            include_once 'views/library-content-upgrade.php';
-            if (isset($settings)) {
-                $h5p = H5P_Plugin::get_instance();
-                $h5p->print_settings($settings, 'H5PAdminIntegration');
-            }
+                return;
+            case 'upgrade':
+                $library = $this->get_library();
+                if ($library) {
+                    $settings = $this->display_content_upgrades($library);
+                }
+                include_once 'views/library-content-upgrade.php';
+                if (isset($settings)) {
+                    $h5p = H5P_Plugin::get_instance();
+                    $h5p->print_settings($settings, 'H5PAdminIntegration');
+                }
 
-            return;
+                return;
         }
-        echo '<div class="wrap"><h2>'.esc_html__('Unknown task.').'</h2></div>';
-    }
-
-    /**
-     * JavaScript settings needed to rebuild content caches.
-     *
-     * @since 1.1.0
-     */
-    private function get_not_cached_settings($num)
-    {
-        return [
-            'num'      => $num,
-            'url'      => route('h5p.ajax.rebuild-cache'),
-            'message'  => __('Not all content has gotten their cache rebuilt. This is required to be able to delete libraries, and to display how many contents that uses the library.'),
-            'progress' => __('1 content need to get its cache rebuilt. :num contents needs to get their cache rebuilt.', ['num' => $num]),
-            //            'button' => __('Rebuild cache')
-        ];
+        echo '<div class="wrap"><h2>' . esc_html__('Unknown task.') . '</h2></div>';
     }
 }

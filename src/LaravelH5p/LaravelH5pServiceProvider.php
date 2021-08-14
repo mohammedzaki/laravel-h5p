@@ -15,11 +15,12 @@ class LaravelH5pServiceProvider extends \Illuminate\Support\ServiceProvider
      *
      * @var array
      */
-    protected $listen = [
-        'Zaki\LaravelH5p\Events\H5pEvent' => [
-            'Zaki\LaravelH5p\Listeners\H5pNotification',
-        ],
-    ];
+    protected $listen
+        = [
+            'Zaki\LaravelH5p\Events\H5pEvent' => [
+                'Zaki\LaravelH5p\Listeners\H5pNotification',
+            ],
+        ];
 
     public function register()
     {
@@ -42,9 +43,9 @@ class LaravelH5pServiceProvider extends \Illuminate\Support\ServiceProvider
         });
 
         $this->commands([
-            'command.laravel-h5p.migration',
-            'command.laravel-h5p.reset',
-        ]);
+                            'command.laravel-h5p.migration',
+                            'command.laravel-h5p.reset',
+                        ]);
     }
 
     /**
@@ -54,55 +55,55 @@ class LaravelH5pServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function boot(\Illuminate\Routing\Router $router)
     {
-        $this->loadRoutesFrom(__DIR__.'/../../routes/laravel-h5p.php');
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/laravel-h5p.php');
 
         // config
         $this->publishes([
-            __DIR__.'/../../config/laravel-h5p.php' => config_path('laravel-h5p.php'),
-        ], 'config');
+                             __DIR__ . '/../../config/laravel-h5p.php' => config_path('laravel-h5p.php'),
+                         ], 'config');
         $this->mergeConfigFrom(
-            __DIR__.'/../../config/laravel-h5p.php',
+            __DIR__ . '/../../config/laravel-h5p.php',
             'laravel-h5p'
         );
 
         // language
         $this->publishes([
-            __DIR__.'/../../lang/en/laravel-h5p.php' => resource_path('lang/en/laravel-h5p.php'),
-        ], 'language');
+                             __DIR__ . '/../../lang/en/laravel-h5p.php' => resource_path('lang/en/laravel-h5p.php'),
+                         ], 'language');
         $this->publishes([
-            __DIR__.'/../../lang/fr/laravel-h5p.php' => resource_path('lang/fr/laravel-h5p.php'),
-        ], 'language');
+                             __DIR__ . '/../../lang/fr/laravel-h5p.php' => resource_path('lang/fr/laravel-h5p.php'),
+                         ], 'language');
         $this->publishes([
-            __DIR__.'/../../lang/ar/laravel-h5p.php' => resource_path('lang/ar/laravel-h5p.php'),
-        ], 'language');
+                             __DIR__ . '/../../lang/ar/laravel-h5p.php' => resource_path('lang/ar/laravel-h5p.php'),
+                         ], 'language');
         $this->publishes([
-            __DIR__.'/../../lang/pt/laravel-h5p.php' => resource_path('lang/pt/laravel-h5p.php'),
-        ], 'language');
+                             __DIR__ . '/../../lang/pt/laravel-h5p.php' => resource_path('lang/pt/laravel-h5p.php'),
+                         ], 'language');
 
         // views
         $this->publishes([
-            __DIR__.'/../../views/h5p' => resource_path('views/h5p'),
-        ], 'resources');
+                             __DIR__ . '/../../views/h5p' => resource_path('views/h5p'),
+                         ], 'resources');
 
         // migrations
         $this->publishes([
-            __DIR__.'/../../migrations/' => database_path('migrations'),
-        ], 'migrations');
+                             __DIR__ . '/../../migrations/' => database_path('migrations'),
+                         ], 'migrations');
 
         // h5p
         $this->publishes([
-            __DIR__.'/../../assets'                        => public_path('assets/vendor/laravel-h5p'),
-            app_path('/../vendor/h5p/h5p-core/fonts')      => public_path('assets/vendor/h5p/h5p-core/fonts'),
-            app_path('/../vendor/h5p/h5p-core/images')     => public_path('assets/vendor/h5p/h5p-core/images'),
-            app_path('/../vendor/h5p/h5p-core/js')         => public_path('assets/vendor/h5p/h5p-core/js'),
-            app_path('/../vendor/h5p/h5p-core/styles')     => public_path('assets/vendor/h5p/h5p-core/styles'),
-            app_path('/../vendor/h5p/h5p-editor/ckeditor') => public_path('assets/vendor/h5p/h5p-editor/ckeditor'),
-            app_path('/../vendor/h5p/h5p-editor/images')   => public_path('assets/vendor/h5p/h5p-editor/images'),
-            app_path('/../vendor/h5p/h5p-editor/language') => public_path('assets/vendor/h5p/h5p-editor/language'),
-            app_path('/../vendor/h5p/h5p-editor/libs')     => public_path('assets/vendor/h5p/h5p-editor/libs'),
-            app_path('/../vendor/h5p/h5p-editor/scripts')  => public_path('assets/vendor/h5p/h5p-editor/scripts'),
-            app_path('/../vendor/h5p/h5p-editor/styles')   => public_path('assets/vendor/h5p/h5p-editor/styles'),
-        ], 'public');
+                             __DIR__ . '/../../assets'                      => public_path('assets/vendor/laravel-h5p'),
+                             app_path('/../vendor/h5p/h5p-core/fonts')      => public_path('assets/vendor/h5p/h5p-core/fonts'),
+                             app_path('/../vendor/h5p/h5p-core/images')     => public_path('assets/vendor/h5p/h5p-core/images'),
+                             app_path('/../vendor/h5p/h5p-core/js')         => public_path('assets/vendor/h5p/h5p-core/js'),
+                             app_path('/../vendor/h5p/h5p-core/styles')     => public_path('assets/vendor/h5p/h5p-core/styles'),
+                             app_path('/../vendor/h5p/h5p-editor/ckeditor') => public_path('assets/vendor/h5p/h5p-editor/ckeditor'),
+                             app_path('/../vendor/h5p/h5p-editor/images')   => public_path('assets/vendor/h5p/h5p-editor/images'),
+                             app_path('/../vendor/h5p/h5p-editor/language') => public_path('assets/vendor/h5p/h5p-editor/language'),
+                             app_path('/../vendor/h5p/h5p-editor/libs')     => public_path('assets/vendor/h5p/h5p-editor/libs'),
+                             app_path('/../vendor/h5p/h5p-editor/scripts')  => public_path('assets/vendor/h5p/h5p-editor/scripts'),
+                             app_path('/../vendor/h5p/h5p-editor/styles')   => public_path('assets/vendor/h5p/h5p-editor/styles'),
+                         ], 'public');
     }
 
     public function provides()

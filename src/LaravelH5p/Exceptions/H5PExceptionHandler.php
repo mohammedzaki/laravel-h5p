@@ -24,9 +24,10 @@ class H5PExceptionHandler extends ExceptionHandler
      *
      * @var array
      */
-    protected $dontReport = [
-        HttpException::class,
-    ];
+    protected $dontReport
+        = [
+            HttpException::class,
+        ];
 
     /**
      * Report or log an exception.
@@ -54,19 +55,19 @@ class H5PExceptionHandler extends ExceptionHandler
     {
         switch ($e) {
 
-        case $e instanceof ModelNotFoundException:
+            case $e instanceof ModelNotFoundException:
 
-            return $this->renderException($e);
-            break;
+                return $this->renderException($e);
+                break;
 
-        case $e instanceof H5PException:
+            case $e instanceof H5PException:
 
-            return $this->renderException($e);
-            break;
+                return $this->renderException($e);
+                break;
 
-        default:
+            default:
 
-            return parent::render($request, $e);
+                return parent::render($request, $e);
         }
     }
 
@@ -74,16 +75,16 @@ class H5PExceptionHandler extends ExceptionHandler
     {
         switch ($e) {
 
-        case $e instanceof ModelNotFoundException:
-            return response()->view('errors.404', [], 404);
-            break;
+            case $e instanceof ModelNotFoundException:
+                return response()->view('errors.404', [], 404);
+                break;
 
-        case $e instanceof H5PException:
-            return response()->view('errors.friendly');
-            break;
-        default:
-            return (new SymfonyDisplayer(config('app.debug')))
-                ->createResponse($e);
+            case $e instanceof H5PException:
+                return response()->view('errors.friendly');
+                break;
+            default:
+                return (new SymfonyDisplayer(config('app.debug')))
+                    ->createResponse($e);
         }
     }
 }
