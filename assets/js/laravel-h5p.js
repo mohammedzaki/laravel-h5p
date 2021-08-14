@@ -68,8 +68,8 @@
                         return false;
                     }
                 }
-
-                $(this).find('.btn').button('loading');
+                var btnSave = $('#save-button');
+                btnSave.prop('value', btnSave.attr("data-loading-text"));
             });
 
             // Title label

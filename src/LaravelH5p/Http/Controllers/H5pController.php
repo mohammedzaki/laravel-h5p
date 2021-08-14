@@ -187,9 +187,10 @@ class H5pController extends Controller
         // view Get the file and settings to print from
         $settings = $h5p::get_editor($content);
 
-        $settings['editor']['filesPath'] = asset('storage/h5p/content/'. $content['id']);
+        $nonce = bin2hex(random_bytes(4));
 
-        // http://localhost:1000/storage/h5p/content/3/images/background-5fedd8eddcb4a.jpg
+        $settings['editor']['ajaxPath'] .= $nonce .'/';
+        $settings['editor']['filesPath'] = asset('storage/h5p/content/'. $content['id']);
 
         // create event dispatch
         event(new H5pEvent('content', 'edit', $content['id'], $content['title'], $content['library']['name'], $content['library']['majorVersion'].'.'.$content['library']['minorVersion']));
@@ -240,7 +241,7 @@ class H5pController extends Controller
                 //$params = json_decode($content['params']);
 
                 //new
-                $params = json_decode($request->get('parameters'));
+                $params = json_decode(html_entity_decode($request->get('parameters')));
                 if (!empty($params->metadata) && !empty($params->metadata->title)) {
                     $content['title'] = $params->metadata->title;
                 } else {
@@ -269,7 +270,9 @@ class H5pController extends Controller
                 $this->get_disabled_content_features($core, $content);
 
                 // Handle file upload
-                $return_id = $this->handle_upload($content);
+                $return_id = $content['id'];
+
+                $this->handle_upload_nonce($request->get('nonce'), $return_id);
             }
 
             if ($return_id) {
