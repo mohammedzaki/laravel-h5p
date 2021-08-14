@@ -14,6 +14,7 @@ namespace Zaki\LaravelH5p\Repositories;
 
 use DB;
 use Zaki\LaravelH5p\Eloquents\H5pLibrariesHubCache;
+use Zaki\LaravelH5p\Eloquents\H5pLibrary;
 use H5PEditorAjaxInterface;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,33 +47,32 @@ class EditorAjaxRepository implements H5PEditorAjaxInterface
     {
         // Get latest version of local libraries
         $major_versions_sql = 'SELECT hl.name,
-                MAX(hl.major_version) AS majorVersion
+                MAX(hl.major_version) AS major_version
            FROM h5p_libraries hl
           WHERE hl.runnable = 1
        GROUP BY hl.name';
 
         $minor_versions_sql = "SELECT hl2.name,
-                 hl2.majorVersion,
-                 MAX(hl2.minorVersion) AS minorVersion
+                 hl2.major_version,
+                 MAX(hl2.minor_version) AS minor_version
             FROM ({$major_versions_sql}) hl1
             JOIN h5p_libraries hl2
               ON hl1.name = hl2.name
-             AND hl1.majorVersion = hl2.majorVersion
-        GROUP BY hl2.name, hl2.majorVersion";
+             AND hl1.major_version = hl2.major_version
+        GROUP BY hl2.name, hl2.major_version";
 
-        return DB::select("SELECT hl4.id,
-                hl4.name AS machine_name,
-                hl4.major_version,
-                hl4.minor_version,
-                hl4.patch_version,
-                hl4.restricted,
-                hl4.has_icon
-           FROM ({$minor_versions_sql}) hl3
-           JOIN h5p_libraries hl4
-             ON hl3.name = hl4.name
+        DB::statement("SET SESSION sql_mode='';");
+
+        $select = DB::select("SELECT hl4.id,
+                hl4.name AS machine_name
+        FROM ({$minor_versions_sql}) hl3
+        JOIN h5p_libraries hl4
+            ON hl3.name = hl4.name
             AND hl3.major_version = hl4.major_version
             AND hl3.minor_version = hl4.minor_version
-       GROUP BY hl4.name, hl4.major_version, hl4.minor_version");
+        GROUP BY hl4.name, hl4.major_version, hl4.minor_version");
+
+        return collect($select)->pluck('machine_name');
     }
 
     public function getContentTypeCache($machineName = null)
@@ -81,33 +81,20 @@ class EditorAjaxRepository implements H5PEditorAjaxInterface
         if ($machineName) {
             return $where->where('machine_name', $machineName)->pluck('id', 'is_recommended');
         } else {
-            return $where->where('machine_name', $machineName)->get();
+            return $where->get();
         }
     }
 
     public function getLatestLibraryVersions()
     {
-        $recently_used = [];
-        $result = DB::table('h5p_events')
-            ->select([
-                'library_name',
-                'max(created_at) AS max_created_at',
-            ])
-            ->where('type', 'content')
-            ->where('sub_type', 'create')
-            ->where('user_id', Auth::id())
-            ->groupBy('library_name')
-            ->orderBy('max_created_at', 'DESC')
+        $recentlyUsed = H5PLibrary::where('semantics', '!=', '')
             ->get();
 
-        foreach ($result as $row) {
-            $recently_used[] = $row->library_name;
-        }
+        $recentlyUsed->each(function ($val) {
+            $val->machine_name = $val->name;
+        });
 
-        dd($recently_used);
-        exit;
-
-        return $recently_used;
+        return $recentlyUsed;
     }
 
     public function validateEditorToken($token)

@@ -68,8 +68,8 @@
                         return false;
                     }
                 }
-
-                $(this).find('.btn').button('loading');
+                var btnSave = $('#save-button');
+                btnSave.prop('value', btnSave.attr("data-loading-text"));
             });
 
             // Title label
@@ -96,17 +96,19 @@
 
 
     ns.getAjaxUrl = function (action, parameters) {
-        var url = H5PIntegration.editor.ajaxPath + action + '/?';
-        var request_params = [];
+        var url = H5PIntegration.editor.ajaxPath + action;
 
         if (parameters !== undefined) {
-            for (var property in parameters) {
-                if (parameters.hasOwnProperty(property)) {
-                    request_params.push(encodeURIComponent(property) + "=" + encodeURIComponent(parameters[property]));
-                }
+          var separator = url.indexOf('?') === -1 ? '?' : '&';
+          for (var property in parameters) {
+            if (parameters.hasOwnProperty(property)) {
+              url += separator + property + '=' + parameters[property];
+              separator = '&';
             }
+          }
         }
-        return url + request_params.join('&');
+    
+        return url;
     };
 
 

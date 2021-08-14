@@ -14,9 +14,11 @@ namespace Zaki\LaravelH5p\Storages;
 
 use App;
 use DB;
+use H5PCore;
 use Zaki\LaravelH5p\Eloquents\H5pLibrary;
 use Zaki\LaravelH5p\Eloquents\H5pTmpfile;
 use H5peditorStorage;
+use Zaki\LaravelH5p\Repositories\LaravelH5pRepository;
 
 /**
  * Description of H5pStorage.
@@ -33,18 +35,21 @@ class EditorStorage implements H5peditorStorage
 
     public function getAvailableLanguages($machineName, $majorVersion, $minorVersion)
     {
+        return [];
     }
 
     public function getLanguage($machineName, $majorVersion, $minorVersion, $language)
     {
 //        $language = 'ja';
         // Load translation field from DB
-        $return = DB::select('SELECT hlt.translation FROM h5p_libraries_languages hlt
+        $return = DB::select(
+            'SELECT hlt.translation FROM h5p_libraries_languages hlt
            JOIN h5p_libraries hl ON hl.id = hlt.library_id
           WHERE hl.name = ?
             AND hl.major_version = ?
             AND hl.minor_version = ?
-            AND hlt.language_code = ?', [$machineName, $majorVersion, $minorVersion, $language]
+            AND hlt.language_code = ?',
+            [$machineName, $majorVersion, $minorVersion, $language]
         );
 
         return $return ? $return[0]->translation : null;
@@ -77,6 +82,7 @@ class EditorStorage implements H5peditorStorage
 
             // Load all libraries
             $libraries = [];
+
             $libraries_result = H5pLibrary::where('runnable', 1)
                 ->select([
                     //                        'id',
@@ -101,6 +107,9 @@ class EditorStorage implements H5peditorStorage
                 ->whereNotNull('semantics')
                 ->orderBy('name', 'ASC')
                 ->get();
+
+            LaravelH5pRepository::fixCaseKeysArray(['majorVersion', 'minorVersion', 'patchVersion'], $libraries_result);
+
 
             // 모든 버전의 라리브러리가 로드되므로 하나의 가장 최신 라이브러리를 찾는 부분
             foreach ($libraries_result as $library) {
@@ -138,7 +147,7 @@ class EditorStorage implements H5peditorStorage
     public static function markFileForCleanup($file, $content_id)
     {
         $h5p = App::make('LaravelH5p');
-        $path = $h5p->get_h5p_storage();
+        $path = '';
         if (empty($content_id)) {
             // Should be in editor tmp folder
             $path .= '/editor';
