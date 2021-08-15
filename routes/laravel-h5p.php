@@ -2,8 +2,9 @@
 Route::prefix('admin/h5p')->group(function () {
     Route::group(['middleware' => ['web']], function () {
         if (config('laravel-h5p.use_router') == 'EDITOR' || config('laravel-h5p.use_router') == 'ALL') {
-            Route::resource('h5p', "Zaki\LaravelH5p\Http\Controllers\H5pController");
+
             Route::group(['middleware' => ['auth']], function () {
+                Route::resource('h5p', "Zaki\LaravelH5p\Http\Controllers\H5pController");
                 Route::get(
                     'library',
                     "Zaki\LaravelH5p\Http\Controllers\LibraryController@index"

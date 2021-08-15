@@ -413,7 +413,7 @@ class H5pController extends Controller
         try {
             $content = H5pContent::findOrFail($id);
             $content->delete();
-            return route('h5p.index');
+            return redirect()->route('h5p.index');
         } catch (Exception $ex) {
             return trans('laravel-h5p.content.can_not_delete');
         }
