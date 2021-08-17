@@ -71,6 +71,10 @@ Route::prefix('admin/h5p')->group(function () {
                 'ajax/content-user-data',
                 'Zaki\LaravelH5p\Http\Controllers\AjaxController@contentUserData'
             )->name('h5p.ajax.content-user-data');
+            Route::get(
+                'ajax/content-user-data',
+                'Zaki\LaravelH5p\Http\Controllers\AjaxController@getContentUserData'
+            )->name('h5p.ajax.content-user-data');
 
             //nonce
             Route::match(['GET', 'POST'], 'ajax/{nonce}/libraries', 'Zaki\LaravelH5p\Http\Controllers\AjaxController@libraries');

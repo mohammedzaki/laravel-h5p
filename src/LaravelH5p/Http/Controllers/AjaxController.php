@@ -155,4 +155,11 @@ class AjaxController extends Controller
                                     'success' => true,
                                 ]);
     }
+
+    public function getContentUserData(Request $request)
+    {
+        return response()->json([
+                                    'success' => true
+                                ]);
+    }
 }
