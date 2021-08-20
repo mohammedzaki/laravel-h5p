@@ -32,7 +32,6 @@ class H5pContent extends Model
             'author_comments',
             'changes',
             'default_languge',
-            'keywords',
             'description',
         ];
 

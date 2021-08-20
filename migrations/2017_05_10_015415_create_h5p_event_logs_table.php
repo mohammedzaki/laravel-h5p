@@ -14,14 +14,14 @@ class CreateH5pEventLogsTable extends Migration
     public function up()
     {
         Schema::create('h5p_event_logs', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('type');
-            $table->string('sub_type');
-            $table->string('content_id');
-            $table->string('content_title');
-            $table->string('library_name');
-            $table->string('library_version');
-            $table->string('user_id');
+            $table->integerIncrements('id');
+            $table->integer('user_id')->unsigned();
+            $table->string('type', 63);
+            $table->string('sub_type', 63);
+            $table->integer('content_id')->unsigned();
+            $table->string('content_title', 255);
+            $table->string('library_name', 127);
+            $table->string('library_version', 31);
             $table->timestamps();
         });
     }

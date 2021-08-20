@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateH5pTmpfilesTable extends Migration
+class CreateH5pTagsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,9 @@ class CreateH5pTmpfilesTable extends Migration
      */
     public function up()
     {
-        Schema::create('h5p_tmpfiles', function (Blueprint $table) {
+        Schema::create('h5p_tags', function (Blueprint $table) {
             $table->integerIncrements('id');
-            $table->string('path');
-            $table->string('nonce', 8)->nullable();
-            $table->timestamps();
-            $table->index(['created_at'], 'created_at');
+            $table->string('name', 31);
         });
     }
 
@@ -29,6 +26,6 @@ class CreateH5pTmpfilesTable extends Migration
      */
     public function down()
     {
-        Schema::drop('h5p_tmpfiles');
+        Schema::drop('h5p_tags');
     }
 }

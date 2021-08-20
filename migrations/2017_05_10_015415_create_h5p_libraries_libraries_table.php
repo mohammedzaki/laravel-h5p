@@ -14,10 +14,10 @@ class CreateH5pLibrariesLibrariesTable extends Migration
     public function up()
     {
         Schema::create('h5p_libraries_libraries', function (Blueprint $table) {
-            $table->bigInteger('library_id')->unsigned();
-            $table->bigInteger('required_library_id')->unsigned();
+            $table->integer('library_id')->unsigned();
+            $table->integer('required_library_id')->unsigned();
             $table->string('dependency_type', 31);
-            $table->primary(['library_id', 'required_library_id'], 'fk_primary');
+            $table->primary(['library_id', 'required_library_id']);
         });
     }
 
