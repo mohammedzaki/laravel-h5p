@@ -1161,7 +1161,6 @@ class LaravelH5pRepository implements H5PFrameworkInterface
                 'license'           => json_encode(isset($ct->license) ? $ct->license : []),
                 'example'           => $ct->example,
                 'tutorial'          => isset($ct->tutorial) ? $ct->tutorial : '',
-                'keywords'          => json_encode(isset($ct->keywords) ? $ct->keywords : []),
                 'categories'        => json_encode(isset($ct->categories) ? $ct->categories : []),
                 'owner'             => $ct->owner,
             ];

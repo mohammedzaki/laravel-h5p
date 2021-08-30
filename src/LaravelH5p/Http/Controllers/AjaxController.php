@@ -26,10 +26,10 @@ class AjaxController extends Controller
         $editor = $h5p::$h5peditor;
 
         //log($machineName);
-        Log::debug('An informational message.' . $machineName . '=====' . $h5p->get_language());
+        // Log::debug('An informational message.' . $machineName . '=====' . $h5p->get_language());
         if ($machineName) {
             $defaultLanguag = $editor->getLibraryLanguage($machineName, $major_version, $minor_version, $h5p->get_language());
-            Log::debug('An informational message.' . $machineName . '=====' . $h5p->get_language() . '=====' . $defaultLanguag);
+            // Log::debug('An informational message.' . $machineName . '=====' . $h5p->get_language() . '=====' . $defaultLanguag);
 
             //   public function getLibraryData($machineName, $majorVersion, $minorVersion, $languageCode, $prefix = '', $fileDir = '', $defaultLanguage) {
 

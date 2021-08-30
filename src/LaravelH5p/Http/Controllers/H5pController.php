@@ -3,6 +3,7 @@
 namespace Zaki\LaravelH5p\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Zaki\LaravelH5p\Eloquents\H5pContent;
 use Zaki\LaravelH5p\Events\H5pEvent;
 use H5pCore;
