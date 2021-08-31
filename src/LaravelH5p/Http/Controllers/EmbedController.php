@@ -18,7 +18,14 @@ class EmbedController extends Controller
         $embed      = $h5p->get_embed($content, $settings);
         $embed_code = $embed['embed'];
         $settings   = $embed['settings'];
-        $user       = \Auth::user();
+        if (empty($request->user)) {
+            $user = \Auth::user();
+        } else {
+            $user = \Auth::loginUsingId($request->user);
+            if (!$user) {
+                $user = null;
+            }
+        }
 
         event(new H5pEvent('content', null, $content['id'], $content['title'], $content['library']['name'], $content['library']['majorVersion'], $content['library']['minorVersion']));
 
